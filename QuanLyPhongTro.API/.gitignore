@@ -1,0 +1,28 @@
+# Build
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# User-specific
+.env
+appsettings.Development.json
+appsettings.*.local.json
+
+# Publish
+publish/
+
+# Misc
+*.log
+*.cache
+[Dd]ebug/
+[Rr]elease/
