@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom'
 import {
+  Chip,
   Container,
   Typography,
   Card,
@@ -170,8 +171,14 @@ const AvailableRoomsPage = () => {
                   />
                 )}
                 <CardContent sx={{ flex: 1 }}>
-                  <Typography variant="h6" component="h2" gutterBottom>
-                    Phòng {room.roomNumber}
+                  <Chip
+                    label={`Phòng ${room.roomNumber}`}
+                    color="primary"
+                    size="small"
+                    sx={{ mb: 1, fontWeight: 700 }}
+                  />
+                  <Typography color="text.secondary" variant="body2" gutterBottom>
+                    Vị trí: {room.floor || 'Tầng trệt'}
                   </Typography>
                   <Typography color="text.secondary" variant="body2" gutterBottom>
                     Diện tích: {room.area} m²

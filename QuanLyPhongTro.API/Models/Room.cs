@@ -6,6 +6,7 @@ public class Room
 {
     public int Id { get; set; }
     public string RoomNumber { get; set; } = default!;
+    public string Floor { get; set; } = "Tầng trệt";
     public decimal Area { get; set; }
     public decimal MonthlyRent { get; set; }
     public string Status { get; set; } = "Available"; // Available, Reserved, Occupied, Maintenance

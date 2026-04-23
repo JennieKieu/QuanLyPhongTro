@@ -46,6 +46,7 @@ const RoomsPage = () => {
   const [editingRoom, setEditingRoom] = useState(null)
   const [formData, setFormData] = useState({
     roomNumber: '',
+    floor: 'Tầng trệt',
     area: '',
     monthlyRent: '',
     description: '',
@@ -87,6 +88,7 @@ const RoomsPage = () => {
       setEditingRoom(room)
       setFormData({
         roomNumber: room.roomNumber,
+        floor: room.floor || 'Tầng trệt',
         area: room.area.toString(),
         monthlyRent: room.monthlyRent.toString(),
         description: room.description || '',
@@ -99,6 +101,7 @@ const RoomsPage = () => {
       setEditingRoom(null)
       setFormData({
         roomNumber: '',
+        floor: 'Tầng trệt',
         area: '',
         monthlyRent: '',
         description: '',
@@ -116,6 +119,7 @@ const RoomsPage = () => {
     setEditingRoom(null)
     setFormData({
       roomNumber: '',
+      floor: 'Tầng trệt',
       area: '',
       monthlyRent: '',
       description: '',
@@ -134,6 +138,7 @@ const RoomsPage = () => {
         : null
       const payload = new FormData()
       payload.append('roomNumber', formData.roomNumber)
+      payload.append('floor', formData.floor || 'Tầng trệt')
       payload.append('area', formData.area)
       payload.append('monthlyRent', formData.monthlyRent)
       if (formData.description) payload.append('description', formData.description)
@@ -318,6 +323,9 @@ const RoomsPage = () => {
                     </Box>
                   )}
                   <Typography color="text.secondary">
+                    Số tầng: {room.floor || 'Tầng trệt'}
+                  </Typography>
+                  <Typography color="text.secondary">
                     Diện tích: {room.area} m²
                   </Typography>
                   <Typography color="text.secondary">
@@ -397,6 +405,7 @@ const RoomsPage = () => {
             <TableRow>
               <TableCell>Số phòng</TableCell>
               <TableCell>Diện tích (m²)</TableCell>
+              <TableCell>Số tầng</TableCell>
               <TableCell>Giá thuê/tháng</TableCell>
               <TableCell>Trạng thái</TableCell>
               <TableCell>Tối thiểu thuê</TableCell>
@@ -409,7 +418,7 @@ const RoomsPage = () => {
           <TableBody>
             {filteredRooms.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} align="center">
+                <TableCell colSpan={10} align="center">
                   Chưa có phòng nào
                 </TableCell>
               </TableRow>
@@ -418,6 +427,7 @@ const RoomsPage = () => {
               <TableRow key={room.id}>
                 <TableCell>{room.roomNumber}</TableCell>
                 <TableCell>{room.area}</TableCell>
+                <TableCell>{room.floor || 'Tầng trệt'}</TableCell>
                 <TableCell>
                   {new Intl.NumberFormat('vi-VN').format(room.monthlyRent)} đ
                 </TableCell>
@@ -543,6 +553,18 @@ const RoomsPage = () => {
                 setFormData({ ...formData, roomNumber: e.target.value })
               }
               margin="normal"
+              required
+              disabled={isReadOnlyEdit}
+            />
+            <TextField
+              fullWidth
+              label="Số tầng"
+              value={formData.floor}
+              onChange={(e) =>
+                setFormData({ ...formData, floor: e.target.value })
+              }
+              margin="normal"
+              placeholder="Ví dụ: Tầng trệt, Lầu 1, Lầu 2..."
               required
               disabled={isReadOnlyEdit}
             />

@@ -256,6 +256,12 @@ namespace QuanLyPhongTro.API.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Floor")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasDefaultValue("Tầng trệt");
+
                     b.Property<string>("ImageUrls")
                         .HasColumnType("nvarchar(max)");
 

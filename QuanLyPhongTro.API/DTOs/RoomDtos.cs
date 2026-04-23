@@ -6,6 +6,7 @@ public class RoomDto
 {
     public int Id { get; set; }
     public string RoomNumber { get; set; } = default!;
+    public string Floor { get; set; } = "Tầng trệt";
     public decimal Area { get; set; }
     public decimal MonthlyRent { get; set; }
     public string Status { get; set; } = default!;
@@ -19,6 +20,7 @@ public class RoomDto
 public class CreateRoomDto
 {
     public string RoomNumber { get; set; } = default!;
+    public string Floor { get; set; } = "Tầng trệt";
     public decimal Area { get; set; }
     public decimal MonthlyRent { get; set; }
     public string? Description { get; set; }
@@ -30,6 +32,7 @@ public class CreateRoomDto
 public class UpdateRoomDto
 {
     public string? RoomNumber { get; set; }
+    public string? Floor { get; set; }
     public decimal? Area { get; set; }
     public decimal? MonthlyRent { get; set; }
     public string? Status { get; set; }
@@ -43,6 +46,7 @@ public class UpdateRoomDto
 public class CreateRoomFormRequest
 {
     public string RoomNumber { get; set; } = default!;
+    public string Floor { get; set; } = "Tầng trệt";
     public decimal Area { get; set; }
     public decimal MonthlyRent { get; set; }
     public string? Description { get; set; }
@@ -54,6 +58,7 @@ public class CreateRoomFormRequest
 public class UpdateRoomFormRequest
 {
     public string? RoomNumber { get; set; }
+    public string? Floor { get; set; }
     public decimal? Area { get; set; }
     public decimal? MonthlyRent { get; set; }
     public string? Status { get; set; }

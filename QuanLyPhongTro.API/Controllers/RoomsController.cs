@@ -35,6 +35,7 @@ public class RoomsController : ControllerBase
             {
                 Id = r.Id,
                 RoomNumber = r.RoomNumber,
+                Floor = r.Floor,
                 Area = r.Area,
                 MonthlyRent = r.MonthlyRent,
                 Status = r.Status,
@@ -62,6 +63,7 @@ public class RoomsController : ControllerBase
             {
                 Id = r.Id,
                 RoomNumber = r.RoomNumber,
+                Floor = r.Floor,
                 Area = r.Area,
                 MonthlyRent = r.MonthlyRent,
                 Status = r.Status,
@@ -91,6 +93,7 @@ public class RoomsController : ControllerBase
         {
             Id = room.Id,
             RoomNumber = room.RoomNumber,
+            Floor = room.Floor,
             Area = room.Area,
             MonthlyRent = room.MonthlyRent,
             Status = room.Status,
@@ -122,6 +125,7 @@ public class RoomsController : ControllerBase
         var room = new Room
         {
             RoomNumber = createRoomDto.RoomNumber,
+            Floor = string.IsNullOrWhiteSpace(createRoomDto.Floor) ? "Tầng trệt" : createRoomDto.Floor.Trim(),
             Area = createRoomDto.Area,
             MonthlyRent = createRoomDto.MonthlyRent,
             Status = "Available",
@@ -139,6 +143,7 @@ public class RoomsController : ControllerBase
         {
             Id = room.Id,
             RoomNumber = room.RoomNumber,
+            Floor = room.Floor,
             Area = room.Area,
             MonthlyRent = room.MonthlyRent,
             Status = room.Status,
@@ -178,6 +183,9 @@ public class RoomsController : ControllerBase
 
         if (!string.IsNullOrEmpty(updateRoomDto.RoomNumber))
             room.RoomNumber = updateRoomDto.RoomNumber;
+
+        if (updateRoomDto.Floor != null)
+            room.Floor = string.IsNullOrWhiteSpace(updateRoomDto.Floor) ? "Tầng trệt" : updateRoomDto.Floor.Trim();
 
         if (updateRoomDto.Area.HasValue)
             room.Area = updateRoomDto.Area.Value;

@@ -36,6 +36,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Property(r => r.Status)
             .HasMaxLength(32);
 
+        modelBuilder.Entity<Room>()
+            .Property(r => r.Floor)
+            .HasMaxLength(64)
+            .HasDefaultValue("Tầng trệt");
+
         modelBuilder.Entity<Contract>()
             .Property(c => c.Status)
             .HasMaxLength(32);

@@ -26,6 +26,7 @@ import {
   Close,
   ArrowBack,
   HomeWorkOutlined,
+  LayersOutlined,
   StraightenOutlined,
   PaymentsOutlined,
   CalendarMonthOutlined,
@@ -381,6 +382,9 @@ const RentRoomPage = () => {
               <Divider sx={{ mb: 1 }} />
               <InfoRow icon={StraightenOutlined} label="Diện tích">
                 {room.area} m²
+              </InfoRow>
+              <InfoRow icon={LayersOutlined} label="Số tầng">
+                {room.floor || 'Tầng trệt'}
               </InfoRow>
               <InfoRow icon={PaymentsOutlined} label="Giá thuê / tháng" emphasize>
                 {new Intl.NumberFormat('vi-VN').format(room.monthlyRent)} đ
