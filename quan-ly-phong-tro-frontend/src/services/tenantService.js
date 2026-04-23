@@ -25,5 +25,10 @@ export const tenantService = {
     const response = await api.put('/tenants/profile', data)
     return response.data
   },
+
+  updateById: async (id, data) => {
+    const response = await api.put(`/tenants/${id}`, data)
+    return response.data
+  },
 }
 

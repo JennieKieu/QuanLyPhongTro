@@ -94,7 +94,7 @@ public class AuthController : ControllerBase
                     request.Password!,
                     request.FullName!,
                     request.Phone!,
-                    request.Role ?? "Tenant");
+                    "Tenant");
 
                 // Chỉ đánh dấu OTP đã dùng SAU KHI tạo user thành công
                 await _otpService.MarkOtpAsUsedAsync(request.Email, request.Code);
@@ -146,7 +146,7 @@ public class AuthController : ControllerBase
             request.Password,
             request.FullName,
             request.Phone,
-            request.Role);
+            "Tenant");
 
         var token = _jwtService.GenerateAccessToken(user);
 

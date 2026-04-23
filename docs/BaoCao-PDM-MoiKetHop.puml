@@ -1,0 +1,174 @@
+@startuml BaoCao-PDM-MoiKetHop
+' PDM — SQL Server / EF Core (class diagram: mũi tên cha → con, nhãn 1 / n / 0..1 trên cạnh)
+' Không dùng Crow’s foot (||--o{); bản số hiển thị trực tiếp như nhiều công cụ PDM
+
+title PDM — Mô hình vật lý (mũi tên + bản số 1, n, 0..1)
+
+hide circle
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam linetype ortho
+skinparam ArrowColor #333333
+skinparam ArrowThickness 1.4
+skinparam ArrowFontSize 11
+skinparam ArrowFontStyle bold
+skinparam nodesep 200
+skinparam ranksep 200
+skinparam classAttributeIconSize 0
+
+skinparam class {
+  BackgroundColor #E8F4FC
+  BorderColor #1a5276
+  FontColor #1B2631
+}
+skinparam ClassHeaderBackgroundColor #A9CCE3
+
+left to right direction
+
+class "Users\n(NGUOIDUNG)" as users <<Table>> {
+  Id : int <<pk>>
+  --
+  Email : nvarchar(450) <<unique>>
+  PasswordHash : nvarchar(max)
+  FullName : nvarchar(max)
+  Phone : nvarchar(max)
+  Role : nvarchar(max)
+  IsEmailVerified : bit
+  CreatedAt : datetime2
+  LastLoginAt : datetime2?
+}
+
+class "OtpCodes\n(MAOTP)" as otp <<Table>> {
+  Id : int <<pk>>
+  --
+  Email : nvarchar(450)
+  Code : nvarchar(450)
+  ExpiresAt : datetime2
+  Used : bit
+  CreatedAt : datetime2
+}
+
+class "Tenants\n(KHACHTHUE)" as tenants <<Table>> {
+  Id : int <<pk>>
+  UserId : int <<fk>>
+  --
+  FullName : nvarchar(max)
+  Phone : nvarchar(max)
+  Email : nvarchar(max)
+  IdentityCard : nvarchar(max)
+  Address : nvarchar(max)
+  DateOfBirth : datetime2?
+  Gender : nvarchar(max)
+  EmergencyContact : nvarchar(max)
+  EmergencyPhone : nvarchar(max)
+  CreatedAt : datetime2
+}
+
+class "Rooms\n(PHONG)" as rooms <<Table>> {
+  Id : int <<pk>>
+  --
+  RoomNumber : nvarchar(max)
+  Area : decimal(18,2)
+  MonthlyRent : decimal(18,2)
+  Status : nvarchar(32)
+  Description : nvarchar(max)
+  ImageUrls : nvarchar(max)
+  DepositAmount : decimal(18,2)?
+  MinLeaseMonths : int?
+  CreatedAt : datetime2
+}
+
+class "Contracts\n(HOPDONG)" as contracts <<Table>> {
+  Id : int <<pk>>
+  RoomId : int <<fk>>
+  TenantId : int <<fk>>
+  --
+  StartDate : datetime2
+  EndDate : datetime2
+  SignedDate : datetime2?
+  MonthlyRent : decimal(18,2)
+  Deposit : decimal(18,2)?
+  DepositPaid : decimal(18,2)
+  DepositPaidAt : datetime2?
+  DepositRefundedAmount : decimal(18,2)
+  DepositRefundedAt : datetime2?
+  DepositRefundNotes : nvarchar(max)
+  Status : nvarchar(32)
+  SignedByLandlord : bit
+  SignedByTenant : bit
+  CreatedAt : datetime2
+  CreatedBy : int?
+  ApprovedAt : datetime2?
+  ApprovedBy : int?
+  EndedAt : datetime2?
+  RentalTermsAcceptedAt : datetime2?
+  TerminationInitiatedBy : nvarchar(32)
+  TerminationReason : nvarchar(2000)
+  ContractNumber : nvarchar(max)
+  Terms : nvarchar(max)
+  Notes : nvarchar(max)
+}
+
+class "Utilities\n(CHISODIENNUOC)" as utilities <<Table>> {
+  Id : int <<pk>>
+  RoomId : int <<fk>>
+  --
+  Month : int
+  Year : int
+  ElectricityIndex : int
+  WaterIndex : int
+  ElectricityUnitPrice : decimal(18,2)
+  WaterUnitPrice : decimal(18,2)
+  ServiceFee : decimal(18,2)
+  RecordedAt : datetime2
+}
+
+class "Invoices\n(HOADON)" as invoices <<Table>> {
+  Id : int <<pk>>
+  ContractId : int <<fk>>
+  --
+  InvoiceType : nvarchar(32)
+  Month : int
+  Year : int
+  DueDate : datetime2
+  RoomRent : decimal(18,2)
+  ElectricityAmount : decimal(18,2)
+  WaterAmount : decimal(18,2)
+  TotalAmount : decimal(18,2)
+  Status : nvarchar(32)
+  CreatedAt : datetime2
+}
+
+class "Payments\n(THANHTOAN)" as payments <<Table>> {
+  Id : int <<pk>>
+  InvoiceId : int <<fk>>
+  --
+  Amount : decimal(18,2)
+  PaymentDate : datetime2
+  PaymentMethod : nvarchar(max)
+  Notes : nvarchar(max)
+}
+
+' Mũi tên: từ bảng cha → bảng con; sát cha ghi 1, sát con ghi n (hoặc 0..1)
+users "1" --> "0..1" tenants : UserId
+tenants "1" --> "n" contracts : TenantId
+rooms "1" --> "n" contracts : RoomId
+rooms "1" --> "n" utilities : RoomId
+contracts "1" --> "n" invoices : ContractId
+invoices "1" --> "n" payments : InvoiceId
+
+note bottom of otp
+  **OtpCodes** độc lập — không FK tới **Users**
+  (nghiệp vụ theo Email + Code).
+end note
+
+legend right
+  |= Ký hiệu PDM |= |
+  | **1** | Một bản ghi bảng cha |
+  | **n** | Nhiều bản ghi bảng con (0..n) |
+  | **0..1** | Tối đa một bản ghi con (**UserId** unique) |
+  | Nhãn trên cạnh | Tên cột **FK** ở bảng con |
+  | Mũi tên | Hướng **identifying / FK** về phía bảng chứa khóa ngoại |
+end legend
+
+@enduml

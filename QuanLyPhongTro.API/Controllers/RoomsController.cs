@@ -233,8 +233,14 @@ public class RoomsController : ControllerBase
             return NotFound();
         }
 
+        if (room.Status == "Occupied" || room.Status == "Reserved")
+        {
+            return BadRequest(new { message = "Không thể xóa phòng ở trạng thái Đã thuê hoặc Giữ chỗ." });
+        }
+
         // Check if room has active contracts
-        var hasActiveContracts = room.Contracts.Any(c => c.Status == "Active");
+        var hasActiveContracts = room.Contracts.Any(c =>
+            c.Status == "Active" || c.Status == "Pending" || c.Status == "AwaitingDeposit");
         if (hasActiveContracts)
         {
             return BadRequest(new { message = "Không thể xóa phòng đang có hợp đồng đang hoạt động" });

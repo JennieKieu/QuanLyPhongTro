@@ -1,0 +1,53 @@
+@startuml BaoCao-SEQ-01-Auth-Register-OTP
+title SEQ 01 - Đăng ký tài khoản bằng OTP
+
+actor Tenant
+participant "Frontend\n(authService)" as FE
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "OtpService" as OS
+participant "EmailService" as ES
+database "ApplicationDbContext" as DB
+participant "JwtService" as JS
+
+Tenant -> FE: Đăng ký (email, password,\nfullName, phone)
+FE -> AC: POST /api/auth/register
+AC -> AS: EmailExistsAsync(email)
+AS -> DB: Kiểm tra Users theo Email
+DB --> AS: exists?
+alt Email đã tồn tại
+  AS --> AC: true
+  AC --> FE: 400 "Email đã tồn tại."
+else Email hợp lệ
+  AS --> AC: false
+  AC -> OS: CreateAndSendOtpAsync(email, "register")
+  OS -> DB: Insert OtpCode(Used=false, ExpiresAt)
+  DB --> OS: saved
+  OS -> ES: SendEmailAsync(email, subject, code)
+  ES --> OS: sent
+  OS --> AC: ok
+  AC --> FE: 200 "Đã gửi OTP tới email. Vui lòng kiểm tra và xác thực."
+end
+
+Tenant -> FE: Nhập OTP + thông tin đăng ký
+FE -> AC: POST /api/auth/verify-otp
+AC -> OS: VerifyOtpAsync(markAsUsed=false)
+OS -> DB: Lấy OTP mới nhất chưa dùng
+DB --> OS: otp
+alt OTP không hợp lệ / hết hạn
+  OS --> AC: false
+  AC --> FE: 400 "OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử Gửi lại OTP."
+else OTP hợp lệ
+  OS --> AC: true
+  AC -> AS: CreateUserAsync(..., role="Tenant")
+  AS -> DB: Insert User
+  AS -> DB: Insert Tenant(UserId)
+  DB --> AS: saved
+  AS --> AC: user
+  AC -> OS: MarkOtpAsUsedAsync(email, code)
+  OS -> DB: Update OtpCode.Used=true
+  AC -> JS: GenerateAccessToken(user)
+  JS --> AC: JWT
+  AC --> FE: 200 + accessToken + user info
+end
+@enduml

@@ -25,5 +25,9 @@ export const utilityService = {
     const response = await api.put(`/utilities/${id}`, data)
     return response.data
   },
+
+  delete: async (id) => {
+    await api.delete(`/utilities/${id}`)
+  },
 }
 

@@ -1,0 +1,63 @@
+@startuml BaoCao-SEQ-04-Contracts-Rent-Approve
+title SEQ 04 - Thuê phòng và duyệt hợp đồng
+
+actor Tenant
+actor Landlord
+participant "Frontend\n(contractService)" as FE
+participant "ContractsController" as CC
+participant "InvoiceCalculationService" as ICS
+database "ApplicationDbContext" as DB
+
+group Tenant gửi yêu cầu thuê phòng
+Tenant -> FE: Thuê phòng (RoomId, startDate,...)
+FE -> CC: POST /api/contracts/rent-room
+CC -> DB: Tìm Tenant theo UserId
+CC -> DB: Kiểm tra Room Available\nvà không có hợp đồng mở
+alt Không hợp lệ
+  CC --> FE: 400/404
+else Hợp lệ
+  CC -> DB: Insert Contract(Status=Pending,\nSignedByTenant=true,\nRentalTermsAcceptedAt=Now)
+  DB --> CC: created
+  CC --> FE: 201 ContractDto
+end
+end
+
+group Landlord duyệt hợp đồng
+Landlord -> FE: Duyệt hợp đồng + cập nhật giá/terms
+FE -> CC: PUT /api/contracts/{id}/approve
+CC -> DB: Load Contract + Room
+alt Contract không tồn tại / không ở Pending
+  CC --> FE: 404/400
+else Hợp lệ
+  CC -> DB: Update SignedByLandlord,\nApprovedAt, ApprovedBy
+  alt Có tiền cọc cần thu
+    CC -> DB: Update Contract.Status=AwaitingDeposit,\nRoom.Status=Reserved
+    CC -> DB: SaveChanges
+    CC -> ICS: GenerateDepositInvoice(contractId)
+    ICS -> DB: Validate AwaitingDeposit + no existing
+    ICS -> DB: Insert Invoice(Type=Deposit, Pending)
+    DB --> ICS: invoice
+    ICS --> CC: ok
+  else Không cọc
+    CC -> DB: Update Contract.Status=Active,\nRoom.Status=Occupied
+    CC -> DB: SaveChanges
+  end
+  CC --> FE: 204
+end
+end
+
+group Landlord từ chối hợp đồng
+Landlord -> FE: Từ chối
+FE -> CC: PUT /api/contracts/{id}/reject
+CC -> DB: Load contract
+alt Pending/AwaitingDeposit
+  CC -> DB: Contract.Status=Rejected
+  opt Nếu room đang Reserved
+    CC -> DB: Room.Status=Available
+  end
+  CC --> FE: 204
+else Không đúng trạng thái
+  CC --> FE: 400 "Chỉ có thể từ chối hợp đồng đang chờ duyệt hoặc đang chờ cọc"
+end
+end
+@enduml

@@ -1,0 +1,30 @@
+@startuml BaoCao-SEQ-08-Reports-Summary
+title SEQ 08 - Tổng hợp báo cáo dashboard
+
+actor Landlord
+participant "Frontend\n(reportService)" as FE
+participant "ReportsController" as RC
+database "ApplicationDbContext" as DB
+
+Landlord -> FE: Xem dashboard (month, year)
+FE -> RC: GET /api/reports/summary?month=&year=
+RC -> RC: Chuẩn hóa month/year\n(mặc định = thời gian VN hiện tại)
+
+par Overview KPI
+  RC -> DB: Count Rooms by status
+  RC -> DB: Count Tenants, Contracts,\nActive/Pending/Expiring
+else Invoice KPI
+  RC -> DB: Query periodInvoices\n(Monthly by period,\nDeposit by CreatedAt)
+  RC -> DB: Count Paid/Pending/Overdue
+  RC -> DB: Sum paid revenue,\noutstanding debt
+  RC -> DB: Sum deposit refunds in period
+else Utility KPI
+  RC -> DB: Sum roomRent/electric/water\nfrom monthly invoices
+  RC -> RC: serviceFee = total - components
+end
+
+RC -> DB: Build yearlyRevenue\n(group by month)
+RC -> DB: Build debtByTenant (top 10)
+RC -> DB: Build roomRevenue (top 10)
+RC --> FE: 200 SummaryResponse
+@enduml

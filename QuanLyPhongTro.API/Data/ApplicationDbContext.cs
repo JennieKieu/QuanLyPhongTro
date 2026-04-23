@@ -40,8 +40,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Property(c => c.Status)
             .HasMaxLength(32);
 
+        modelBuilder.Entity<Contract>()
+            .Property(c => c.TerminationInitiatedBy)
+            .HasMaxLength(32);
+
+        modelBuilder.Entity<Contract>()
+            .Property(c => c.TerminationReason)
+            .HasMaxLength(2000);
+
         modelBuilder.Entity<Invoice>()
             .Property(i => i.Status)
+            .HasMaxLength(32);
+
+        modelBuilder.Entity<Invoice>()
+            .Property(i => i.InvoiceType)
             .HasMaxLength(32);
 
         modelBuilder.Entity<OtpCode>()

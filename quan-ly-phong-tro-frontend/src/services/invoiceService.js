@@ -26,13 +26,36 @@ export const invoiceService = {
     return response.data
   },
 
+  exportPdf: async (id) => {
+    const response = await api.get(`/invoices/${id}/pdf`, {
+      responseType: 'blob',
+      headers: { Accept: 'application/pdf' },
+    })
+    return response.data
+  },
+
   generate: async (data) => {
     const response = await api.post('/invoices/generate', data)
     return response.data
   },
 
+  generateDeposit: async (data) => {
+    const response = await api.post('/invoices/generate-deposit', data)
+    return response.data
+  },
+
   pay: async (id, data) => {
     const response = await api.put(`/invoices/${id}/pay`, data)
+    return response.data
+  },
+
+  update: async (id, data) => {
+    const response = await api.put(`/invoices/${id}`, data)
+    return response.data
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/invoices/${id}`)
     return response.data
   },
 }

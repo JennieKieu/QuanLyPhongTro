@@ -1,0 +1,168 @@
+@startuml BaoCao-KetHopThucThe
+' Sơ đồ kết hợp thực thể — Quản lý phòng trọ
+' Xem nhanh: https://www.plantuml.com/plantuml/uml — dán nội dung file
+' Hoặc VS Code: extension "PlantUML" (Alt+D preview)
+'
+' Ghi chú trên quan hệ: dùng đường ortho + nodesep/ranksep lớn để nhãn nằm giữa đoạn nối.
+' Nếu vẫn chồng: tăng nodesep / ranksep (vd. 260 / 280).
+' <<M>> = Mandatory (bắt buộc, khớp thuộc tính non-nullable trong Models). ? = tùy chọn/nullable.
+
+title Sơ đồ kết hợp các thực thể (Quản lý phòng trọ)
+
+hide circle
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam linetype ortho
+skinparam ArrowColor #333333
+skinparam ArrowThickness 1
+skinparam ArrowFontSize 10
+skinparam ArrowFontStyle bold
+' Khoảng cách lớn → đoạn nối dài → nhãn dễ nằm giữa đường, ít đè viền thực thể
+skinparam nodesep 220
+skinparam ranksep 200
+
+left to right direction
+
+entity "Users\n(NGUOIDUNG)" as users {
+  * **Id** : int <<PK>> <<M>>
+  --
+  Email : string <<unique>> <<M>>
+  PasswordHash : string <<M>>
+  Role : string <<M>>
+  FullName : string <<M>>
+  Phone : string <<M>>
+  IsEmailVerified : bool <<M>>
+  CreatedAt : datetime <<M>>
+  LastLoginAt : datetime?
+}
+
+entity "Tenants\n(KHACHTHUE)" as tenants {
+  * **Id** : int <<PK>> <<M>>
+  * **UserId** : int <<FK>> <<M>>
+  --
+  FullName : string <<M>>
+  Phone : string <<M>>
+  Email : string <<M>>
+  IdentityCard : string?
+  Address : string?
+  DateOfBirth : datetime?
+  Gender : string?
+  EmergencyContact : string?
+  EmergencyPhone : string?
+  CreatedAt : datetime <<M>>
+}
+
+entity "Rooms\n(PHONG)" as rooms {
+  * **Id** : int <<PK>> <<M>>
+  --
+  RoomNumber : string <<M>>
+  Area : decimal <<M>>
+  MonthlyRent : decimal <<M>>
+  Status : string <<M>>
+  Description : string?
+  ImageUrls : string?
+  DepositAmount : decimal?
+  MinLeaseMonths : int?
+  CreatedAt : datetime <<M>>
+}
+
+entity "Contracts\n(HOPDONG)" as contracts {
+  * **Id** : int <<PK>> <<M>>
+  * **RoomId** : int <<FK>> <<M>>
+  * **TenantId** : int <<FK>> <<M>>
+  --
+  StartDate : datetime <<M>>
+  EndDate : datetime <<M>>
+  MonthlyRent : decimal <<M>>
+  Deposit : decimal?
+  DepositPaid : decimal <<M>>
+  DepositPaidAt : datetime?
+  DepositRefundedAmount : decimal <<M>>
+  DepositRefundedAt : datetime?
+  DepositRefundNotes : string?
+  Status : string <<M>>
+  SignedDate : datetime?
+  SignedByLandlord : bool <<M>>
+  SignedByTenant : bool <<M>>
+  ContractNumber : string?
+  Terms : string?
+  Notes : string?
+  RentalTermsAcceptedAt : datetime?
+  TerminationInitiatedBy : string?
+  TerminationReason : string?
+  EndedAt : datetime?
+  CreatedAt : datetime <<M>>
+  CreatedBy : int?
+  ApprovedAt : datetime?
+  ApprovedBy : int?
+}
+
+entity "Utilities\n(CHISODIENNUOC)" as utilities {
+  * **Id** : int <<PK>> <<M>>
+  * **RoomId** : int <<FK>> <<M>>
+  --
+  Month : int <<M>>
+  Year : int <<M>>
+  ElectricityIndex : int <<M>>
+  WaterIndex : int <<M>>
+  ElectricityUnitPrice : decimal <<M>>
+  WaterUnitPrice : decimal <<M>>
+  ServiceFee : decimal <<M>>
+  RecordedAt : datetime <<M>>
+}
+
+entity "Invoices\n(HOADON)" as invoices {
+  * **Id** : int <<PK>> <<M>>
+  * **ContractId** : int <<FK>> <<M>>
+  --
+  InvoiceType : string <<M>>
+  Month : int <<M>>
+  Year : int <<M>>
+  RoomRent : decimal <<M>>
+  ElectricityAmount : decimal <<M>>
+  WaterAmount : decimal <<M>>
+  TotalAmount : decimal <<M>>
+  Status : string <<M>>
+  DueDate : datetime <<M>>
+  CreatedAt : datetime <<M>>
+}
+
+entity "Payments\n(THANHTOAN)" as payments {
+  * **Id** : int <<PK>> <<M>>
+  * **InvoiceId** : int <<FK>> <<M>>
+  --
+  Amount : decimal <<M>>
+  PaymentDate : datetime <<M>>
+  PaymentMethod : string <<M>>
+  Notes : string?
+}
+
+entity "OtpCodes\n(MAOTP)" as otp {
+  * **Id** : int <<PK>> <<M>>
+  --
+  Email : string <<M>>
+  Code : string <<M>>
+  ExpiresAt : datetime <<M>>
+  Used : bool <<M>>
+  CreatedAt : datetime <<M>>
+}
+
+' Nhãn một dòng trên cạnh (ngắn gọn). Bản số chi tiết trong note on link (giữa/kèm đường nối).
+users ||--o| tenants : "UserId"
+
+
+tenants ||--o{ contracts : "TenantId"
+
+rooms ||--o{ contracts : "RoomId"
+
+
+rooms ||--o{ utilities : "RoomId"
+
+
+contracts ||--o{ invoices : "ContractId"
+
+
+invoices ||--o{ payments : "InvoiceId"
+
+
+@enduml

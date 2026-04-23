@@ -1,0 +1,37 @@
+@startuml BaoCao-SEQ-06-Invoice-Pay-Deposit-Activate
+title SEQ 06 - Thanh toán hóa đơn và kích hoạt hợp đồng sau thu cọc
+
+actor Landlord
+participant "Frontend\n(invoiceService)" as FE
+participant "InvoicesController" as IC
+database "ApplicationDbContext" as DB
+
+Landlord -> FE: Thanh toán hóa đơn (id, amount, method)
+FE -> IC: PUT /api/invoices/{id}/pay
+IC -> DB: Load Invoice + Contract + Room
+
+alt Không tìm thấy invoice
+  IC --> FE: 404
+else Đã Paid
+  IC --> FE: 400 "Hóa đơn đã được thanh toán"
+else Amount > TotalAmount
+  IC --> FE: 400 "Số tiền thanh toán không được vượt quá tổng tiền hóa đơn"
+else InvoiceType=Deposit and amount != total
+  IC --> FE: 400 "Hóa đơn cọc phải thanh toán đủ số tiền trên hóa đơn."
+else Hợp lệ
+  IC -> DB: Update Invoice.Status = Paid
+  IC -> DB: Insert Payment(InvoiceId,Amount,\nPaymentDate,PaymentMethod,Notes)
+
+  alt InvoiceType = Deposit
+    IC -> DB: Contract.DepositPaid = amount
+    IC -> DB: Contract.DepositPaidAt = Now
+    opt Contract.Status = AwaitingDeposit
+      IC -> DB: Contract.Status = Active
+      IC -> DB: Room.Status = Occupied
+    end
+  end
+
+  IC -> DB: SaveChanges
+  IC --> FE: 204
+end
+@enduml

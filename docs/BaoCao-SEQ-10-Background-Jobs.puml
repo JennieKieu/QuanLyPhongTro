@@ -1,0 +1,49 @@
+@startuml BaoCao-SEQ-10-Contract-Terminate-Refund
+title SEQ 10 - Chấm dứt hợp đồng và xử lý hoàn cọc
+
+actor Tenant
+actor Landlord
+participant "Frontend\n(contractService)" as FE
+participant "ContractsController" as CC
+database "ApplicationDbContext" as DB
+
+group Tenant chấm dứt trước hạn
+Tenant -> FE: Gửi yêu cầu chấm dứt (reason)
+FE -> CC: PUT /api/contracts/{id}/terminate-by-tenant
+CC -> DB: Tìm Tenant theo UserId
+CC -> DB: Load Contract + Room
+alt Không tìm thấy / không thuộc tenant / không Active
+  CC --> FE: 404/403/400
+else Hợp lệ
+  CC -> DB: Contract.Status=Terminated\nTerminationInitiatedBy="Tenant"\nTerminationReason, EndedAt
+  CC -> DB: Kiểm tra hợp đồng mở khác của phòng
+  opt Không còn hợp đồng mở và phòng đang Occupied
+    CC -> DB: Room.Status=Available
+  end
+  opt EndDate > hôm nay và DepositPaid > 0
+    CC -> DB: DepositRefundedAmount=0\nDepositRefundedAt=Now\nDepositRefundNotes="...mất tiền cọc..."
+  end
+  CC -> DB: SaveChanges
+  CC --> FE: 204
+end
+end
+
+group Landlord ghi nhận hoàn cọc
+Landlord -> FE: Ghi nhận hoàn cọc (RefundedAmount, Notes)
+FE -> CC: PUT /api/contracts/{id}/deposit-refund
+CC -> DB: Find Contract
+alt RefdAmount âm / hợp đồng không tồn tại
+  CC --> FE: 400/404
+else Đã xử lý cọc trước đó
+  CC --> FE: 400 "Cọc đã được ghi nhận xử lý cho hợp đồng này."
+else Status không phải Expired/Terminated
+  CC --> FE: 400 "Chỉ ghi nhận hoàn cọc khi hợp đồng đã hết hạn..."
+else DepositPaid <= 0 hoặc RefdAmount > DepositPaid
+  CC --> FE: 400 "Số tiền hoàn không hợp lệ."
+else Hợp lệ
+  CC -> DB: Update DepositRefundedAmount,\nDepositRefundedAt, DepositRefundNotes
+  CC -> DB: SaveChanges
+  CC --> FE: 204
+end
+end
+@enduml

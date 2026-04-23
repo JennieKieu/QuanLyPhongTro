@@ -11,8 +11,18 @@ export const contractService = {
     return response.data
   },
 
+  getAwaitingDeposit: async () => {
+    const response = await api.get('/contracts/awaiting-deposit')
+    return response.data
+  },
+
   getActive: async () => {
     const response = await api.get('/contracts/active')
+    return response.data
+  },
+
+  getExpiringSoon: async (days = 30) => {
+    const response = await api.get(`/contracts/expiring-soon?days=${days}`)
     return response.data
   },
 
@@ -23,6 +33,14 @@ export const contractService = {
 
   getMyContract: async () => {
     const response = await api.get('/contracts/my-contract')
+    return response.data
+  },
+
+  exportPdf: async (id) => {
+    const response = await api.get(`/contracts/${id}/pdf`, {
+      responseType: 'blob',
+      headers: { Accept: 'application/pdf' },
+    })
     return response.data
   },
 
@@ -48,6 +66,26 @@ export const contractService = {
 
   update: async (id, data) => {
     const response = await api.put(`/contracts/${id}`, data)
+    return response.data
+  },
+
+  extend: async (id, data) => {
+    const response = await api.put(`/contracts/${id}/extend`, data)
+    return response.data
+  },
+
+  terminate: async (id, data) => {
+    const response = await api.put(`/contracts/${id}/terminate`, data)
+    return response.data
+  },
+
+  terminateAsTenant: async (id, data) => {
+    const response = await api.put(`/contracts/${id}/terminate-by-tenant`, data)
+    return response.data
+  },
+
+  recordDepositRefund: async (id, data) => {
+    const response = await api.put(`/contracts/${id}/deposit-refund`, data)
     return response.data
   },
 

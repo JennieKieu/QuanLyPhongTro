@@ -1,0 +1,161 @@
+@startuml BaoCao-CDM-MoiKetHop
+' CDM kiểu PowerDesigner: thực thể (xanh) — «relationship» R1…R6 (vàng) — bản số (0,1) (1,1) (1,n) trên cạnh
+' Tham chiếu: BaoCao-CDM-MoiKetHop.drawio / ảnh CDM mẫu
+' https://www.plantuml.com/plantuml/uml
+' Bố cục ngang: left to right + ranksep lớn (khoảng cách theo trục chính)
+
+title CDM — Quan hệ qua «relationship» (bố cục ngang)
+
+hide circle
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam linetype ortho
+skinparam ArrowColor #333333
+skinparam ArrowThickness 1
+skinparam ArrowFontSize 10
+skinparam ArrowFontStyle bold
+' LR: ranksep = khoảng cách theo chiều ngang giữa các “hàng” đồ thị; nodesep = khoảng cách dọc giữa nhánh song song
+skinparam ranksep 200
+skinparam nodesep 100
+skinparam classAttributeIconSize 0
+
+skinparam class<<relationship>> {
+  BackgroundColor #FFF9C4
+  BorderColor #B7950B
+  FontColor #1B2631
+}
+
+left to right direction
+
+class "NGUOIDUNG\n(User)" as nd <<entity>> {
+  MaND <pi> : Integer <<M>>
+  --
+  Email : Characters(256) <<M>>
+  HoTen : Characters(100) <<M>>
+  VaiTro : Characters(50) <<M>>
+  SDT : Characters(20) <<M>>
+}
+
+class "KHACHTHUE\n(Tenant)" as kt <<entity>> {
+  MaKT <pi> : Integer <<M>>
+  MaND : Integer <<M>>
+  --
+  HoTen : Characters(100) <<M>>
+  SDT : Characters(20) <<M>>
+  Email : Characters(256) <<M>>
+  DiaChi : Text(200)
+}
+
+class "PHONG\n(Room)" as ph <<entity>> {
+  MaPhong <pi> : Integer <<M>>
+  --
+  SoPhong : Characters(20) <<M>>
+  DienTich : Number(10,2) <<M>>
+  GiaThueThang : Number(18,2) <<M>>
+  TrangThai : Characters(20) <<M>>
+  MoTa : Text(max)
+}
+
+class "HOPDONG\n(Contract)" as hd <<entity>> {
+  MaHD <pi> : Integer <<M>>
+  MaPhong : Integer <<M>>
+  MaKT : Integer <<M>>
+  --
+  NgayBatDau : Date <<M>>
+  NgayKetThuc : Date <<M>>
+  TienThueThang : Number(18,2) <<M>>
+  TienCoc : Number(18,2)
+  TrangThai : Characters(32) <<M>>
+  SoHopDong : Characters(50)
+  --
+  NgayKy : Date
+  DaKyChuTro : Boolean <<M>>
+  DaKyKhach : Boolean <<M>>
+  --
+  TienCocDaDong : Number(18,2) <<M>>
+  NgayThuCoc : Date
+  SoTienHoanCoc : Number(18,2) <<M>>
+  NgayHoanCoc : Date
+  GhiChuHoanCoc : Text(max)
+  --
+  NgayChapNhanDieuKhoan : Date
+  NoiDungDieuKhoan : Text(max)
+  GhiChu : Text(max)
+  --
+  BenRaYeuCauChamDut : Characters(32)
+  LyDoChamDut : Text(2000)
+  NgayGhiNhanKetThuc : Date
+  --
+  NgayTao : DateTime <<M>>
+  NguoiTao : Integer
+  NgayDuyet : Date
+  NguoiDuyet : Integer
+}
+
+class "CHISODIENNUOC\n(UtilityReading)" as cs <<entity>> {
+  MaCS <pi> : Integer <<M>>
+  MaPhong : Integer <<M>>
+  --
+  Thang : Integer <<M>>
+  Nam : Integer <<M>>
+  ChiSoDien : Integer <<M>>
+  ChiSoNuoc : Integer <<M>>
+  DonGiaDien : Number(18,2) <<M>>
+  DonGiaNuoc : Number(18,2) <<M>>
+}
+
+class "HOADON\n(Invoice)" as hdv <<entity>> {
+  MaHoaDon <pi> : Integer <<M>>
+  MaHD : Integer <<M>>
+  --
+  Thang : Integer <<M>>
+  Nam : Integer <<M>>
+  TienPhong : Number(18,2) <<M>>
+  TienDien : Number(18,2) <<M>>
+  TienNuoc : Number(18,2) <<M>>
+  TongTien : Number(18,2) <<M>>
+  TrangThai : Characters(20) <<M>>
+}
+
+class "THANHTOAN\n(Payment)" as tt <<entity>> {
+  MaTT <pi> : Integer <<M>>
+  MaHoaDon : Integer <<M>>
+  --
+  SoTien : Number(18,2) <<M>>
+  NgayThanhToan : Date <<M>>
+  HinhThuc : Characters(50) <<M>>
+}
+
+' --- Ô quan hệ «relationship» (R1…R6), tên nghiệp vụ như CDM mẫu ---
+
+class "**R1**\nCó hồ sơ" as r1 <<relationship>>
+class "**R2**\nĐược thuê trong" as r2 <<relationship>>
+class "**R3**\nKý hợp đồng" as r3 <<relationship>>
+class "**R4**\nPhát sinh hóa đơn" as r4 <<relationship>>
+class "**R5**\nGhi chỉ số" as r5 <<relationship>>
+class "**R6**\nThanh toán" as r6 <<relationship>>
+
+' Bản số: gần thực thể — (min,max) theo sơ đồ PowerDesigner mẫu
+
+nd "0,1" -- r1
+r1 -- "1,1" kt
+
+ph "1,n" -- r2
+r2 -- "1,1" hd
+
+kt "1,n" -- r3
+r3 -- "1,1" hd
+
+hd "1,n" -- r4
+r4 -- "1,1" hdv
+
+ph "1,n" -- r5
+r5 -- "1,1" cs
+
+hdv "1,n" -- r6
+r6 -- "1,1" tt
+
+
+
+
+@enduml

@@ -1,0 +1,43 @@
+@startuml BaoCao-SEQ-09-Export-PDF
+title SEQ 09 - Xuất PDF hợp đồng / hóa đơn
+
+actor Tenant
+actor Landlord
+participant "Frontend\n(contractService / invoiceService)" as FE
+participant "ContractsController" as CC
+participant "InvoicesController" as IC
+participant "PdfExportService" as PS
+database "ApplicationDbContext" as DB
+
+group Xuất PDF hợp đồng
+Landlord -> FE: Xuất hợp đồng PDF
+FE -> CC: GET /api/contracts/{id}/pdf
+CC -> DB: Load Contract + Room + Tenant
+alt Contract không tồn tại
+  CC --> FE: 404
+else Tenant truy cập hợp đồng không thuộc mình
+  CC --> FE: 403
+else Contract status != Active
+  CC --> FE: 400 "Chỉ có thể xuất PDF khi hợp đồng đang hoạt động."
+else Hợp lệ
+  CC -> PS: GenerateContractPdf(contract)
+  PS --> CC: pdfBytes
+  CC --> FE: File(application/pdf)
+end
+end
+
+group Xuất PDF hóa đơn
+Tenant -> FE: Xuất hóa đơn PDF
+FE -> IC: GET /api/invoices/{id}/pdf
+IC -> DB: Load Invoice + Contract + Room + Tenant
+alt Invoice không tồn tại
+  IC --> FE: 404
+else Tenant không được quyền
+  IC --> FE: 403
+else Hợp lệ
+  IC -> PS: GenerateInvoicePdf(invoice)
+  PS --> IC: pdfBytes
+  IC --> FE: File(application/pdf)
+end
+end
+@enduml

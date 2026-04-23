@@ -131,13 +131,21 @@ public class TenantsController : ControllerBase
             return NotFound(new { message = "Không tìm thấy thông tin người thuê" });
         }
 
-        var activeContract = await _context.Contracts
+        var baseQ = _context.Contracts
             .Include(c => c.Room)
-            .Where(c => c.TenantId == tenant.Id && c.Status == "Active")
+            .Where(c => c.TenantId == tenant.Id);
+
+        var contract = await baseQ
+            .Where(c => c.Status == "Active")
             .OrderByDescending(c => c.CreatedAt)
             .FirstOrDefaultAsync();
 
-        if (activeContract == null)
+        contract ??= await baseQ
+            .Where(c => c.Status == "AwaitingDeposit")
+            .OrderByDescending(c => c.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (contract == null)
         {
             return NotFound(new { message = "Bạn chưa có phòng đang thuê" });
         }
@@ -146,19 +154,25 @@ public class TenantsController : ControllerBase
         {
             Room = new
             {
-                Id = activeContract.Room.Id,
-                RoomNumber = activeContract.Room.RoomNumber,
-                Area = activeContract.Room.Area,
-                MonthlyRent = activeContract.Room.MonthlyRent,
-                Description = activeContract.Room.Description
+                Id = contract.Room.Id,
+                RoomNumber = contract.Room.RoomNumber,
+                Area = contract.Room.Area,
+                MonthlyRent = contract.Room.MonthlyRent,
+                Description = contract.Room.Description
             },
             Contract = new
             {
-                Id = activeContract.Id,
-                StartDate = activeContract.StartDate,
-                EndDate = activeContract.EndDate,
-                MonthlyRent = activeContract.MonthlyRent,
-                Deposit = activeContract.Deposit
+                Id = contract.Id,
+                StartDate = contract.StartDate,
+                EndDate = contract.EndDate,
+                MonthlyRent = contract.MonthlyRent,
+                Deposit = contract.Deposit,
+                DepositPaid = contract.DepositPaid,
+                DepositRefundedAmount = contract.DepositRefundedAmount,
+                DepositRefundedAt = contract.DepositRefundedAt,
+                DepositRefundNotes = contract.DepositRefundNotes,
+                EndedAt = contract.EndedAt,
+                Status = contract.Status
             }
         });
     }
@@ -204,6 +218,47 @@ public class TenantsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        return NoContent();
+    }
+
+    // PUT: api/tenants/5
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Landlord")]
+    public async Task<IActionResult> UpdateTenant(int id, UpdateTenantProfileDto updateDto)
+    {
+        var tenant = await _context.Tenants
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (tenant == null)
+        {
+            return NotFound();
+        }
+
+        if (!string.IsNullOrWhiteSpace(updateDto.FullName))
+            tenant.FullName = updateDto.FullName.Trim();
+
+        if (!string.IsNullOrWhiteSpace(updateDto.Phone))
+            tenant.Phone = updateDto.Phone.Trim();
+
+        if (updateDto.IdentityCard != null)
+            tenant.IdentityCard = updateDto.IdentityCard.Trim();
+
+        if (updateDto.Address != null)
+            tenant.Address = updateDto.Address.Trim();
+
+        if (updateDto.DateOfBirth.HasValue)
+            tenant.DateOfBirth = updateDto.DateOfBirth;
+
+        if (updateDto.Gender != null)
+            tenant.Gender = updateDto.Gender.Trim();
+
+        if (updateDto.EmergencyContact != null)
+            tenant.EmergencyContact = updateDto.EmergencyContact.Trim();
+
+        if (updateDto.EmergencyPhone != null)
+            tenant.EmergencyPhone = updateDto.EmergencyPhone.Trim();
+
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 }

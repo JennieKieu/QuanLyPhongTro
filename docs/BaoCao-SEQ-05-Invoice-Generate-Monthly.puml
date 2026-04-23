@@ -1,0 +1,41 @@
+@startuml BaoCao-SEQ-05-Invoice-Generate-Monthly
+title SEQ 05 - Tạo hóa đơn tháng
+
+actor Landlord
+participant "Frontend\n(invoiceService)" as FE
+participant "InvoicesController" as IC
+participant "InvoiceCalculationService" as ICS
+database "ApplicationDbContext" as DB
+
+Landlord -> FE: Tạo hóa đơn tháng (contractId, month, year)
+FE -> IC: POST /api/invoices/generate
+IC -> ICS: GenerateInvoice(contractId, month, year)
+
+ICS -> DB: Load Contract + Room + Tenant
+alt Contract không tồn tại
+  ICS --> IC: ArgumentException
+  IC --> FE: 404
+else Contract không Active
+  ICS --> IC: InvalidOperationException
+  IC --> FE: 400
+else Hợp lệ
+  ICS -> DB: Check existing monthly invoice
+  alt Đã tồn tại
+    ICS --> IC: InvalidOperationException
+    IC --> FE: 400
+  else Chưa có
+    ICS -> DB: Load utility reading (current + previous)
+    alt Chưa có utility current month
+      ICS --> IC: InvalidOperationException
+      IC --> FE: 400
+    else Đủ dữ liệu
+      ICS -> ICS: Tính pro-rated room rent\n+ điện + nước + service fee
+      ICS -> DB: Insert Invoice(Type=Monthly,\nStatus=Pending,\nDueDate=endMonth+10d)
+      DB --> ICS: invoice created
+      ICS --> IC: invoice
+      IC -> DB: Load invoice details for response DTO
+      IC --> FE: 201 Created(InvoiceDto)
+    end
+  end
+end
+@enduml

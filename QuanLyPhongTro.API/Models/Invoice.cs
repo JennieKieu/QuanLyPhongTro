@@ -6,6 +6,8 @@ public class Invoice
 {
     public int Id { get; set; }
     public int ContractId { get; set; }
+    /// <summary>Monthly, Deposit</summary>
+    public string InvoiceType { get; set; } = "Monthly";
     public int Month { get; set; }
     public int Year { get; set; }
     public decimal RoomRent { get; set; }

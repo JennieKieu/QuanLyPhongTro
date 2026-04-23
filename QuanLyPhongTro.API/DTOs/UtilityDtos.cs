@@ -11,6 +11,7 @@ public class UtilityReadingDto
     public int WaterIndex { get; set; }
     public decimal ElectricityUnitPrice { get; set; }
     public decimal WaterUnitPrice { get; set; }
+    public decimal ServiceFee { get; set; }
     public DateTime RecordedAt { get; set; }
 }
 
@@ -23,6 +24,7 @@ public class CreateUtilityReadingDto
     public int WaterIndex { get; set; }
     public decimal? ElectricityUnitPrice { get; set; }
     public decimal? WaterUnitPrice { get; set; }
+    public decimal? ServiceFee { get; set; }
 }
 
 public class UpdateUtilityReadingDto
@@ -31,5 +33,6 @@ public class UpdateUtilityReadingDto
     public int? WaterIndex { get; set; }
     public decimal? ElectricityUnitPrice { get; set; }
     public decimal? WaterUnitPrice { get; set; }
+    public decimal? ServiceFee { get; set; }
 }
 

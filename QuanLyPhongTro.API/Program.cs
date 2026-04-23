@@ -1,9 +1,11 @@
 using System.Globalization;
 using System.Text;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using QuanLyPhongTro.API.Data;
 using QuanLyPhongTro.API.Services;
 
@@ -13,7 +15,17 @@ Thread.CurrentThread.CurrentUICulture = new CultureInfo("vi-VN");
 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("vi-VN");
 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("vi-VN");
 
+try
+{
+    // Nạp biến môi trường từ file .env (nếu có), ưu tiên biến đã set sẵn trên máy.
+    Env.TraversePath().NoClobber().Load();
+}
+catch
+{
+    // Bỏ qua nếu không có .env
+}
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -78,6 +90,9 @@ builder.Services.AddScoped<OtpService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<InvoiceCalculationService>();
+builder.Services.AddScoped<PdfExportService>();
+builder.Services.AddHostedService<InvoiceOverdueBackgroundService>();
+builder.Services.AddHostedService<ContractExpiryBackgroundService>();
 
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();

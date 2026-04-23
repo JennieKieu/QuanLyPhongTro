@@ -15,7 +15,7 @@ export const authService = {
         confirmPassword: registerData.confirmPassword,
         fullName: registerData.fullName,
         phone: registerData.phone,
-        role: registerData.role || 'Tenant',
+        role: 'Tenant',
       }),
     }
     const response = await api.post('/auth/verify-otp', body)

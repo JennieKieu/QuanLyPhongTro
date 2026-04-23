@@ -8,7 +8,7 @@ public class Room
     public string RoomNumber { get; set; } = default!;
     public decimal Area { get; set; }
     public decimal MonthlyRent { get; set; }
-    public string Status { get; set; } = "Available"; // Available, Occupied, Maintenance
+    public string Status { get; set; } = "Available"; // Available, Reserved, Occupied, Maintenance
     public string? Description { get; set; }
     // Lưu danh sách URL ảnh dưới dạng JSON
     public string? ImageUrls { get; set; }

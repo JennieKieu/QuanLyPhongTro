@@ -1,0 +1,62 @@
+@startuml BaoCao-SEQ-03-Rooms-Management
+title SEQ 03 - Quản lý phòng (xem phòng trống, CRUD phòng)
+
+actor Guest
+actor Landlord
+participant "Frontend\n(roomService)" as FE
+participant "RoomsController" as RC
+database "ApplicationDbContext" as DB
+collections "File Storage\nwwwroot/uploads/rooms" as FS
+
+group Xem phòng trống (Guest)
+Guest -> FE: Xem danh sách phòng trống
+FE -> RC: GET /api/rooms/available
+RC -> DB: Query Rooms where Status=Available
+DB --> RC: rooms
+RC --> FE: 200 RoomDto[]
+end
+
+group Thêm phòng (Landlord)
+Landlord -> FE: Nhập form + upload ảnh
+FE -> RC: POST /api/rooms (multipart/form-data)
+RC -> DB: Check RoomNumber duplicate
+alt Số phòng đã tồn tại
+  RC --> FE: 400 "Số phòng đã tồn tại"
+else Hợp lệ
+  RC -> FS: SaveImagesAsync(files)
+  FS --> RC: imageUrls
+  RC -> DB: Insert Room(Status=Available)
+  DB --> RC: room created
+  RC --> FE: 201 Created
+end
+end
+
+group Sửa phòng
+Landlord -> FE: Cập nhật thông tin phòng
+FE -> RC: PUT /api/rooms/{id}
+RC -> DB: Find Room + check duplicate number
+alt Không tìm thấy / duplicate
+  RC --> FE: 404/400
+else Hợp lệ
+  opt Có upload ảnh mới
+    RC -> FS: SaveImagesAsync(files)
+  end
+  RC -> DB: Update room fields
+  DB --> RC: saved
+  RC --> FE: 204
+end
+end
+
+group Xóa phòng
+Landlord -> FE: Xóa phòng
+FE -> RC: DELETE /api/rooms/{id}
+RC -> DB: Load Room + Contracts
+alt Room Occupied/Reserved hoặc có hợp đồng mở
+  RC --> FE: 400 "Không thể xóa phòng ở trạng thái Đã thuê hoặc Giữ chỗ."
+else Có thể xóa
+  RC -> DB: Delete Room
+  DB --> RC: deleted
+  RC --> FE: 204
+end
+end
+@enduml

@@ -40,6 +40,7 @@ public class UtilitiesController : ControllerBase
                 WaterIndex = u.WaterIndex,
                 ElectricityUnitPrice = u.ElectricityUnitPrice,
                 WaterUnitPrice = u.WaterUnitPrice,
+                ServiceFee = u.ServiceFee,
                 RecordedAt = u.RecordedAt
             })
             .ToListAsync();
@@ -68,6 +69,7 @@ public class UtilitiesController : ControllerBase
                 WaterIndex = u.WaterIndex,
                 ElectricityUnitPrice = u.ElectricityUnitPrice,
                 WaterUnitPrice = u.WaterUnitPrice,
+                ServiceFee = u.ServiceFee,
                 RecordedAt = u.RecordedAt
             })
             .ToListAsync();
@@ -99,6 +101,7 @@ public class UtilitiesController : ControllerBase
             WaterIndex = utility.WaterIndex,
             ElectricityUnitPrice = utility.ElectricityUnitPrice,
             WaterUnitPrice = utility.WaterUnitPrice,
+            ServiceFee = utility.ServiceFee,
             RecordedAt = utility.RecordedAt
         };
 
@@ -152,6 +155,7 @@ public class UtilitiesController : ControllerBase
         // Get default unit prices from configuration or use provided values
         var electricityUnitPrice = createDto.ElectricityUnitPrice ?? 3000; // Default 3000 VND/kWh
         var waterUnitPrice = createDto.WaterUnitPrice ?? 15000; // Default 15000 VND/m3
+        var serviceFee = createDto.ServiceFee ?? 0m;
 
         var utility = new UtilityReading
         {
@@ -162,6 +166,7 @@ public class UtilitiesController : ControllerBase
             WaterIndex = createDto.WaterIndex,
             ElectricityUnitPrice = electricityUnitPrice,
             WaterUnitPrice = waterUnitPrice,
+            ServiceFee = serviceFee,
             RecordedAt = VietnamTime.Now
         };
 
@@ -179,6 +184,7 @@ public class UtilitiesController : ControllerBase
             WaterIndex = utility.WaterIndex,
             ElectricityUnitPrice = utility.ElectricityUnitPrice,
             WaterUnitPrice = utility.WaterUnitPrice,
+            ServiceFee = utility.ServiceFee,
             RecordedAt = utility.RecordedAt
         };
 
@@ -194,6 +200,15 @@ public class UtilitiesController : ControllerBase
         if (utility == null)
         {
             return NotFound();
+        }
+
+        var hasMonthlyInvoice = await HasExportedMonthlyInvoiceForUtility(utility.RoomId, utility.Month, utility.Year);
+        if (hasMonthlyInvoice)
+        {
+            return BadRequest(new
+            {
+                message = "Đã xuất hóa đơn tháng cho kỳ này, không thể chỉnh sửa chỉ số điện/nước."
+            });
         }
 
         // Validate indices if being updated
@@ -236,9 +251,46 @@ public class UtilitiesController : ControllerBase
         if (updateDto.WaterUnitPrice.HasValue)
             utility.WaterUnitPrice = updateDto.WaterUnitPrice.Value;
 
+        if (updateDto.ServiceFee.HasValue)
+            utility.ServiceFee = updateDto.ServiceFee.Value;
+
         await _context.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    // DELETE: api/utilities/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUtility(int id)
+    {
+        var utility = await _context.Utilities.FindAsync(id);
+        if (utility == null)
+        {
+            return NotFound();
+        }
+
+        var hasMonthlyInvoice = await HasExportedMonthlyInvoiceForUtility(utility.RoomId, utility.Month, utility.Year);
+        if (hasMonthlyInvoice)
+        {
+            return BadRequest(new
+            {
+                message = "Đã xuất hóa đơn tháng cho kỳ này, không thể xóa chỉ số điện/nước."
+            });
+        }
+
+        _context.Utilities.Remove(utility);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    private Task<bool> HasExportedMonthlyInvoiceForUtility(int roomId, int month, int year)
+    {
+        return _context.Invoices.AnyAsync(i =>
+            i.InvoiceType == "Monthly" &&
+            i.Month == month &&
+            i.Year == year &&
+            i.Contract.RoomId == roomId);
     }
 }
 

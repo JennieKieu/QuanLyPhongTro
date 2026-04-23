@@ -1,19 +1,36 @@
 import React, { useState, useEffect } from 'react'
 import {
+  Alert,
+  Box,
+  Chip,
   Container,
-  Typography,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Box,
-  Alert,
-  Chip,
+  Typography,
 } from '@mui/material'
 import { invoiceService } from '../services/invoiceService'
+
+const invoiceTypeLabel = (t) => (t === 'Deposit' ? 'Cọc phòng' : 'Hàng tháng')
+
+const formatInvoicePeriod = (invoice) => {
+  if (invoice.invoiceType === 'Deposit') return '—'
+  return `${invoice.month}/${invoice.year}`
+}
+
+const getServiceFee = (invoice) => {
+  if ((invoice.invoiceType || 'Monthly') !== 'Monthly') return 0
+  const fee =
+    Number(invoice.totalAmount || 0) -
+    Number(invoice.roomRent || 0) -
+    Number(invoice.electricityAmount || 0) -
+    Number(invoice.waterAmount || 0)
+  return fee > 0 ? fee : 0
+}
 
 const MyInvoicesPage = () => {
   const [invoices, setInvoices] = useState([])
@@ -45,7 +62,25 @@ const MyInvoicesPage = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xl" sx={{ mt: 1, mb: 2 }}>
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          mb: 2.5,
+          color: '#fff',
+          backgroundImage:
+            'linear-gradient(120deg, rgba(30,94,255,.9), rgba(124,77,255,.75)), url(https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&w=1200&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <Typography variant="h5" fontWeight={800}>
+          Hóa đơn của tôi
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.95 }}>
+          Theo dõi hóa đơn thuê phòng, tình trạng thanh toán và hạn đến kỳ một cách rõ ràng.
+        </Typography>
+      </Paper>
       <Typography variant="h4" gutterBottom>
         Hóa đơn của tôi
       </Typography>
@@ -63,11 +98,13 @@ const MyInvoicesPage = () => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>Loại</TableCell>
                 <TableCell>Tháng/Năm</TableCell>
                 <TableCell>Phòng</TableCell>
                 <TableCell>Tiền phòng</TableCell>
                 <TableCell>Tiền điện</TableCell>
                 <TableCell>Tiền nước</TableCell>
+                <TableCell>Tiền dịch vụ</TableCell>
                 <TableCell>Tổng tiền</TableCell>
                 <TableCell>Hạn thanh toán</TableCell>
                 <TableCell>Trạng thái</TableCell>
@@ -76,9 +113,8 @@ const MyInvoicesPage = () => {
             <TableBody>
               {invoices.map((invoice) => (
                 <TableRow key={invoice.id}>
-                  <TableCell>
-                    {invoice.month}/{invoice.year}
-                  </TableCell>
+                  <TableCell>{invoiceTypeLabel(invoice.invoiceType || 'Monthly')}</TableCell>
+                  <TableCell>{formatInvoicePeriod(invoice)}</TableCell>
                   <TableCell>{invoice.roomNumber}</TableCell>
                   <TableCell>
                     {new Intl.NumberFormat('vi-VN').format(invoice.roomRent)} đ
@@ -94,6 +130,9 @@ const MyInvoicesPage = () => {
                       invoice.waterAmount
                     )}{' '}
                     đ
+                  </TableCell>
+                  <TableCell>
+                    {new Intl.NumberFormat('vi-VN').format(getServiceFee(invoice))} đ
                   </TableCell>
                   <TableCell>
                     <strong>

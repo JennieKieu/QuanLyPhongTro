@@ -1,0 +1,57 @@
+@startuml BaoCao-SEQ-07-Utilities-Validation
+title SEQ 07 - Nhập/chỉnh sửa chỉ số điện nước và ràng buộc
+
+actor Landlord
+participant "Frontend\n(utilityService)" as FE
+participant "UtilitiesController" as UC
+database "ApplicationDbContext" as DB
+
+group Tạo chỉ số mới
+Landlord -> FE: Nhập chỉ số tháng
+FE -> UC: POST /api/utilities
+UC -> DB: Check Room exists
+UC -> DB: Check duplicate (RoomId, Month, Year)
+alt Duplicate
+  UC --> FE: 400 "Chỉ số điện/nước cho tháng này đã được nhập"
+else Không duplicate
+  UC -> DB: Load previous month reading
+  alt New index < previous index
+    UC --> FE: 400 "Chỉ số điện/nước không được nhỏ hơn chỉ số tháng trước"
+  else Hợp lệ
+    UC -> DB: Insert UtilityReading\n(default unit prices if null)
+    UC --> FE: 201
+  end
+end
+end
+
+group Chỉnh sửa chỉ số
+Landlord -> FE: Chỉnh sửa utility
+FE -> UC: PUT /api/utilities/{id}
+UC -> DB: Find utility
+UC -> DB: Any monthly invoice for same room/month/year?
+alt Đã xuất hóa đơn tháng
+  UC --> FE: 400 "Đã xuất hóa đơn tháng cho kỳ này, không thể chỉnh sửa chỉ số điện/nước."
+else Chưa xuất hóa đơn
+  UC -> DB: Validate index >= previous month
+  alt Invalid index
+    UC --> FE: 400 "Chỉ số điện/nước không được nhỏ hơn chỉ số tháng trước"
+  else Hợp lệ
+    UC -> DB: Update utility fields
+    UC --> FE: 204
+  end
+end
+end
+
+group Xóa utility
+Landlord -> FE: Xóa utility
+FE -> UC: DELETE /api/utilities/{id}
+UC -> DB: Find utility
+UC -> DB: Any monthly invoice for period?
+alt Đã xuất hóa đơn
+  UC --> FE: 400 "Đã xuất hóa đơn tháng cho kỳ này, không thể xóa chỉ số điện/nước."
+else Có thể xóa
+  UC -> DB: Delete utility
+  UC --> FE: 204
+end
+end
+@enduml

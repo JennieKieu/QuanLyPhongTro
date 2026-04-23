@@ -14,7 +14,7 @@ public class InvoiceCalculationService
         _context = context;
     }
 
-    public async Task<(decimal electricityAmount, decimal waterAmount)> CalculateUtilityCosts(
+    public async Task<(decimal electricityAmount, decimal waterAmount, decimal serviceFee)> CalculateUtilityCosts(
         int roomId, int month, int year)
     {
         // Get current month's utility reading
@@ -44,8 +44,9 @@ public class InvoiceCalculationService
         // Calculate costs
         var electricityAmount = electricityUsage * currentReading.ElectricityUnitPrice;
         var waterAmount = waterUsage * currentReading.WaterUnitPrice;
+        var serviceFee = currentReading.ServiceFee;
 
-        return (electricityAmount, waterAmount);
+        return (electricityAmount, waterAmount, serviceFee);
     }
 
     public async Task<Invoice> GenerateInvoice(int contractId, int month, int year)
@@ -65,34 +66,112 @@ public class InvoiceCalculationService
             throw new InvalidOperationException("Can only generate invoice for active contracts");
         }
 
-        // Check if invoice already exists
+        // Check if monthly invoice already exists
         var existingInvoice = await _context.Invoices
-            .FirstOrDefaultAsync(i => i.ContractId == contractId && i.Month == month && i.Year == year);
+            .FirstOrDefaultAsync(i =>
+                i.ContractId == contractId &&
+                i.InvoiceType == "Monthly" &&
+                i.Month == month &&
+                i.Year == year);
 
         if (existingInvoice != null)
         {
             throw new InvalidOperationException("Invoice for this month already exists");
         }
 
+        var roomRent = CalculateProRatedRoomRent(contract, month, year);
+
         // Calculate utility costs
-        var (electricityAmount, waterAmount) = await CalculateUtilityCosts(
+        var (electricityAmount, waterAmount, serviceFee) = await CalculateUtilityCosts(
             contract.RoomId, month, year);
 
         // Calculate total
-        var totalAmount = contract.MonthlyRent + electricityAmount + waterAmount;
+        var totalAmount = roomRent + electricityAmount + waterAmount + serviceFee;
 
-        // Set due date (end of month)
-        var dueDate = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+        // Set due date: end of invoice month + 10 days
+        var dueDate = new DateTime(year, month, DateTime.DaysInMonth(year, month)).AddDays(10);
 
         var invoice = new Invoice
         {
             ContractId = contractId,
+            InvoiceType = "Monthly",
             Month = month,
             Year = year,
-            RoomRent = contract.MonthlyRent,
+            RoomRent = roomRent,
             ElectricityAmount = electricityAmount,
             WaterAmount = waterAmount,
             TotalAmount = totalAmount,
+            Status = "Pending",
+            DueDate = dueDate,
+            CreatedAt = VietnamTime.Now
+        };
+
+        _context.Invoices.Add(invoice);
+        await _context.SaveChangesAsync();
+
+        return invoice;
+    }
+
+    private static decimal CalculateProRatedRoomRent(Contract contract, int month, int year)
+    {
+        var monthStart = new DateTime(year, month, 1);
+        var monthEnd = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+        var effectiveStart = contract.StartDate.Date > monthStart ? contract.StartDate.Date : monthStart;
+        var effectiveEnd = contract.EndDate.Date < monthEnd ? contract.EndDate.Date : monthEnd;
+
+        if (effectiveEnd < effectiveStart)
+        {
+            throw new InvalidOperationException("Hợp đồng không có hiệu lực trong tháng đã chọn.");
+        }
+
+        var occupiedDays = (effectiveEnd - effectiveStart).Days + 1;
+        var daysInMonth = DateTime.DaysInMonth(year, month);
+        var proRatedRent = contract.MonthlyRent * occupiedDays / daysInMonth;
+
+        return Math.Round(proRatedRent, 2, MidpointRounding.AwayFromZero);
+    }
+
+    public async Task<Invoice> GenerateDepositInvoice(int contractId)
+    {
+        var contract = await _context.Contracts
+            .Include(c => c.Room)
+            .FirstOrDefaultAsync(c => c.Id == contractId);
+
+        if (contract == null)
+        {
+            throw new ArgumentException("Contract not found");
+        }
+
+        if (contract.Status != "AwaitingDeposit")
+        {
+            throw new InvalidOperationException("Chỉ tạo hóa đơn cọc khi hợp đồng đang chờ thu cọc.");
+        }
+
+        var required = contract.Deposit ?? contract.Room?.DepositAmount ?? 0m;
+        if (required <= 0)
+        {
+            throw new InvalidOperationException("Hợp đồng không có tiền cọc cần thu.");
+        }
+
+        var existing = await _context.Invoices
+            .AnyAsync(i => i.ContractId == contractId && i.InvoiceType == "Deposit");
+
+        if (existing)
+        {
+            throw new InvalidOperationException("Đã có hóa đơn cọc cho hợp đồng này.");
+        }
+
+        var dueDate = VietnamTime.Now.Date.AddDays(7);
+        var invoice = new Invoice
+        {
+            ContractId = contractId,
+            InvoiceType = "Deposit",
+            Month = 0,
+            Year = 0,
+            RoomRent = 0,
+            ElectricityAmount = 0,
+            WaterAmount = 0,
+            TotalAmount = required,
             Status = "Pending",
             DueDate = dueDate,
             CreatedAt = VietnamTime.Now

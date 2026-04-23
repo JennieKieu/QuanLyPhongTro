@@ -8,6 +8,7 @@ import {
   Box,
   Alert,
   Divider,
+  MenuItem,
 } from '@mui/material'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/authService'
@@ -91,7 +92,25 @@ const ProfilePage = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 1, mb: 2 }}>
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          mb: 2.5,
+          color: '#fff',
+          backgroundImage:
+            'linear-gradient(120deg, rgba(30,94,255,.9), rgba(124,77,255,.75)), url(https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=1200&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <Typography variant="h5" fontWeight={800}>
+          Hồ sơ tài khoản
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.95 }}>
+          Cập nhật thông tin cá nhân và liên hệ khẩn cấp để đảm bảo dữ liệu chính xác.
+        </Typography>
+      </Paper>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom>
           Thông tin tài khoản
@@ -192,14 +211,10 @@ const ProfilePage = () => {
                   setFormData({ ...formData, gender: e.target.value })
                 }
                 margin="normal"
-                SelectProps={{
-                  native: true,
-                }}
               >
-                <option value="">Chọn giới tính</option>
-                <option value="Male">Nam</option>
-                <option value="Female">Nữ</option>
-                <option value="Other">Khác</option>
+                <MenuItem value="">Chọn giới tính</MenuItem>
+                <MenuItem value="Male">Nam</MenuItem>
+                <MenuItem value="Female">Nữ</MenuItem>
               </TextField>
               <TextField
                 fullWidth

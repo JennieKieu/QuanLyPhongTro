@@ -12,6 +12,7 @@ public class UtilityReading
     public int WaterIndex { get; set; }
     public decimal ElectricityUnitPrice { get; set; }
     public decimal WaterUnitPrice { get; set; }
+    public decimal ServiceFee { get; set; }
     public DateTime RecordedAt { get; set; } = VietnamTime.Now;
 
     public Room Room { get; set; } = default!;
