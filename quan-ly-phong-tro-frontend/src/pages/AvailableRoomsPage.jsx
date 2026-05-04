@@ -31,6 +31,8 @@ const AvailableRoomsPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
   const [page, setPage] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
@@ -56,13 +58,15 @@ const AvailableRoomsPage = () => {
   const filteredRooms = useMemo(
     () =>
       rooms.filter((room) => {
-        if (!query) return true
-        return (
-          room.roomNumber?.toLowerCase().includes(query) ||
-          room.description?.toLowerCase().includes(query)
-        )
+        if (query && !(room.roomNumber?.toLowerCase().includes(query) || room.description?.toLowerCase().includes(query))) {
+          return false
+        }
+        const price = Number(room.monthlyRent || 0)
+        if (minPrice && price < Number(minPrice)) return false
+        if (maxPrice && price > Number(maxPrice)) return false
+        return true
       }),
-    [rooms, query]
+    [rooms, query, minPrice, maxPrice]
   )
 
   useEffect(() => {
@@ -127,7 +131,33 @@ const AvailableRoomsPage = () => {
             if (e.key === 'Enter') e.preventDefault()
           }}
         />
-        <Button variant="outlined" onClick={() => setSearchTerm('')}>
+        <TextField
+          label="Giá tối thiểu"
+          placeholder="VD: 1000000"
+          type="number"
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
+          sx={{ minWidth: { sm: 180 } }}
+          inputProps={{ min: 0 }}
+        />
+        <TextField
+          label="Giá tối đa"
+          placeholder="VD: 5000000"
+          type="number"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          sx={{ minWidth: { sm: 180 } }}
+          inputProps={{ min: 0 }}
+        />
+        <Button
+          variant="outlined"
+          onClick={() => {
+            setSearchTerm('')
+            setMinPrice('')
+            setMaxPrice('')
+          }}
+          sx={{ whiteSpace: 'nowrap' }}
+        >
           Xóa lọc
         </Button>
       </Stack>
@@ -159,7 +189,18 @@ const AvailableRoomsPage = () => {
             {pagedRooms.map((room) => (
               <Card
                 key={room.id}
-                sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => navigate(`/rooms/rent/${room.id}`)}
               >
                 {room.imageUrls && room.imageUrls.length > 0 && (
                   <CardMedia
@@ -213,7 +254,10 @@ const AvailableRoomsPage = () => {
                     size="small"
                     variant="contained"
                     fullWidth
-                    onClick={() => navigate(`/rooms/rent/${room.id}`)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/rooms/rent/${room.id}`)
+                    }}
                   >
                     Thuê phòng
                   </Button>

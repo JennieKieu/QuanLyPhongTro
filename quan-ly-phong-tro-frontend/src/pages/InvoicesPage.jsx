@@ -67,6 +67,7 @@ const InvoicesPage = () => {
   const [yearFilter, setYearFilter] = useState('all')
   const [openDialog, setOpenDialog] = useState(false)
   const [openPayDialog, setOpenPayDialog] = useState(false)
+  const [openQrDialog, setOpenQrDialog] = useState(false)
   const [openEditDialog, setOpenEditDialog] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState(null)
   const [contracts, setContracts] = useState([])
@@ -658,6 +659,7 @@ const InvoicesPage = () => {
           >
             <MenuItem value="Cash">Tiền mặt</MenuItem>
             <MenuItem value="BankTransfer">Chuyển khoản</MenuItem>
+            <MenuItem value="VnPay">VNPay</MenuItem>
             <MenuItem value="Other">Khác</MenuItem>
           </TextField>
           <TextField

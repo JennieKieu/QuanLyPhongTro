@@ -270,7 +270,7 @@ const RentRoomPage = () => {
                     loading="lazy"
                     sx={{
                       width: '100%',
-                      height: { xs: 240, sm: 320 },
+                      height: { xs: 320, sm: 420, md: 480 },
                       objectFit: 'cover',
                       cursor: 'zoom-in',
                       display: 'block',
@@ -357,7 +357,7 @@ const RentRoomPage = () => {
             ) : (
               <Box
                 sx={{
-                  height: { xs: 200, sm: 260 },
+                  height: { xs: 280, sm: 380, md: 420 },
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

@@ -387,7 +387,7 @@ public class InvoicesController : ControllerBase
 
     // PUT: api/invoices/5/pay
     [HttpPut("{id}/pay")]
-    [Authorize(Roles = "Landlord")]
+    [Authorize(Roles = "Landlord,Tenant")]
     public async Task<IActionResult> PayInvoice(int id, PayInvoiceDto payDto)
     {
         var invoice = await _context.Invoices
@@ -398,6 +398,18 @@ public class InvoicesController : ControllerBase
         if (invoice == null)
         {
             return NotFound();
+        }
+
+        // Check authorization for tenant
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var userRole = User.FindFirst(ClaimTypes.Role)!.Value;
+        if (userRole == "Tenant")
+        {
+            var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.UserId == userId);
+            if (tenant == null || invoice.Contract.TenantId != tenant.Id)
+            {
+                return Forbid();
+            }
         }
 
         if (invoice.Status == "Paid")
